@@ -1,0 +1,14 @@
+package Enums;
+
+public enum Conditions {
+	// Regal Zustände, bzw. was beachtet werden muss
+	full, // voller Regal
+	empty, // Leerer Regal
+	heavyStoneUnderneath, // Voraussetzung: Steine müssen auf der niedrigsten Ebene platziert werden
+	BarNeedsTwoPalletts, // Holzbalken benötigen zwei Palletten
+
+	// Auftraege
+	idNotFound, maximalFourAssignment, // Es dürfen nur 4 Aufträge auf einmal durchgeführt werden
+	notMatchingAssignment, //
+	productName, productAttr1, productAttr2, assignmentType
+}

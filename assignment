@@ -1,0 +1,103 @@
+package Assignment;
+
+import Ausnahmefaelle.*;
+import Enums.*;
+import Products.*;
+
+public class assignment {
+
+	static int idCounter;
+	private int aId, aReward;
+	private Assignmenttype aType;
+	public Products aProducts;
+
+	public assignment(String[] temp) {
+		try {
+			aId = idCounter++;
+			aType = temp[1].equals("Einlagerung") ? Assignmenttype.store : Assignmenttype.outsource;
+			aReward = Integer.parseInt(temp[5]);
+			switch (temp[2]) {
+			case "Papier":
+				switch (temp[3]) {
+				case "Weiß":
+				case "Blau":
+				case "Grün":
+					switch (temp[4]) {
+					case "A3":
+					case "A4":
+					case "A5":
+						aProducts = new Paper(temp[3], temp[4]);
+						break;
+					default:
+						throw new InstructionForAssignment(Conditions.productAttr2);
+					}
+					break;
+				default:
+					throw new InstructionForAssignment(Conditions.productAttr1);
+				}
+				break;
+			case "Holz":
+				switch (temp[3]) {
+				case "Kiefer":
+				case "Buche":
+				case "Eiche":
+					switch (temp[4]) {
+					case "Bretter":
+					case "Balken":
+					case "Scheit":
+						aProducts = new Wood(temp[3], temp[4]);
+						break;
+					default:
+						throw new InstructionForAssignment(Conditions.productAttr2);
+					}
+					break;
+				default:
+					throw new InstructionForAssignment(Conditions.productAttr1);
+				}
+				break;
+			case "Stein":
+				switch (temp[3]) {
+				case "Marmor":
+				case "Granit":
+				case "Sandstein":
+					switch (temp[4]) {
+					case "Leicht":
+					case "Mittel":
+					case "Schwer":
+						aProducts = new Stone(temp[3], temp[4]);
+						break;
+					default:
+						throw new InstructionForAssignment(Conditions.productAttr2);
+					}
+					break;
+				default:
+					throw new InstructionForAssignment(Conditions.productAttr1);
+				}
+				break;
+			}
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+		}
+	}
+
+	public assignment(Assignmenttype aType, int aReward) {
+		this.aType = aType;
+		this.aReward = aReward;
+	}
+
+	public int getId() {
+		return aId;
+	}
+
+	public int getReward() {
+		return aReward;
+	}
+
+	public Assignmenttype getAssignmenttype() {
+		return aType;
+	}
+
+	public Products getProduct() {
+		return aProducts;
+	}
+}

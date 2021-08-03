@@ -1,0 +1,630 @@
+/*Empfehlung: Das Spiel im Vollbildmodus spielen*/
+//Matrikel-Nr. 8396905
+package GUI;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.EventQueue;
+import java.awt.Font;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.UIManager;
+import javax.swing.border.LineBorder;
+import javax.swing.plaf.ColorUIResource;
+
+import Assignment.assignment;
+import Assignment.assignmentlist;
+import Bilanz.Bilanz;
+import Enums.Assignmenttype;
+import Ausnahmefaelle.InstructionForAssignment;
+import Products.Products;
+import Shelf.compartment;
+import Control.Control;
+
+public class Start {
+
+	private JFrame mainFrame, bilanzFrame;
+
+	private Control theControl;
+
+	private JButton buttonNewAssignment, buttonAbort, buttonScrap, buttonResort, buttonBilanz;
+
+	private JPanel panelCenter, panelButtons, panelAssignments, panelBilanz;
+
+	private auftrag fokusAssignment = null;
+	private btnMode modus = btnMode.neutral;
+	private int maxNumAssignments = 4;
+	private JPanel[] panelAssignment = new JPanel[maxNumAssignments];
+	private JLabel[] labelAssignmentType = new JLabel[maxNumAssignments],
+			labelProductName = new JLabel[maxNumAssignments], labelProductAttr1 = new JLabel[maxNumAssignments],
+			labelProductAttr2 = new JLabel[maxNumAssignments], labelReward = new JLabel[maxNumAssignments];
+
+	private JLabel labelBilanz;
+	private JButton[] buttonRegalCompartment = new JButton[10];
+	private JList<String> listBilanz;
+
+	public static void main(String[] args) {
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					Start window = new Start();
+					window.mainFrame.setVisible(true);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+	}
+
+	public Start() {
+		initialize();
+		theControl = new Control(this);
+	}
+
+	public void updateGui() {
+		updateBilanz(theControl.getBilanz());
+		updateAssignmentList(theControl.getassignmentsListe());
+		updateShelf(theControl.getShelf());
+		updateButtons();
+	}
+
+	public void updateButtons() {
+		switch (modus) {
+		case fokusAssignment:
+			buttonNewAssignment.setEnabled(false);
+			buttonNewAssignment.setBackground(Color.green); // Farbe des Buttons NeuerAuftrag
+			buttonAbort.setEnabled(true);
+			buttonAbort.setBackground(Color.red); // Abbruch Button Frabe
+			buttonScrap.setEnabled(false);
+			buttonScrap.setBackground(null);
+			buttonResort.setEnabled(false);
+			buttonResort.setBackground(null);
+			break;
+		case fokusShelf:
+			buttonNewAssignment.setEnabled(false);
+			buttonNewAssignment.setBackground(null);
+			buttonAbort.setEnabled(false);
+			buttonAbort.setBackground(null);
+			buttonScrap.setEnabled(true);
+			buttonScrap.setBackground(Color.red); // Verschrottung Farbe Button
+			buttonResort.setEnabled(true);
+			buttonResort.setBackground(new Color(22, 44, 231)); // Farbe von Umlagern Button
+			break;
+		case resort:
+			buttonNewAssignment.setEnabled(false);
+			buttonNewAssignment.setBackground(null);
+			buttonAbort.setEnabled(false);
+			buttonAbort.setBackground(null);
+			buttonScrap.setEnabled(false);
+			buttonScrap.setBackground(null);
+			buttonResort.setEnabled(true);
+			buttonResort.setBackground(Color.blue); // Umlagern Farbe
+			break;
+		case neutral:
+			if (theControl.getassignmentsListe() != null) {
+				boolean b = theControl.getassignmentsListe().getNum() < 5; // Mögliche Aufträge 4
+				buttonNewAssignment.setEnabled(b);
+				buttonNewAssignment.setBackground(b ? Color.green : null);
+			} else {
+				buttonNewAssignment.setEnabled(true);
+				buttonNewAssignment.setBackground(Color.gray); // Wenn Die 4 Aufträge voll sind wird der Button grau
+			}
+			buttonAbort.setEnabled(false);
+			buttonAbort.setBackground(null);
+			buttonScrap.setEnabled(false);
+			buttonScrap.setBackground(null);
+			buttonResort.setEnabled(false);
+			buttonResort.setBackground(null);
+			break;
+		default:
+			break;
+		}
+	}
+
+	public void updateButtons(btnMode modus) {
+		this.modus = modus;
+		updateButtons();
+	}
+
+	public void setButtonRegalCompartmentEnabled(boolean b, int i) {
+		buttonRegalCompartment[i].setEnabled(b);
+		buttonRegalCompartment[i].setBorder(new LineBorder(b ? Color.BLACK : Color.GRAY, b ? 4 : 1));
+	}
+
+	public void setButtonRegalCompartmentEnabled(boolean b) {
+		for (int i = 0; i < 10; i++)
+			setButtonRegalCompartmentEnabled(b, i);
+	}
+
+	public void setButtonNewAssignmentEnabled(boolean b) {
+		buttonNewAssignment.setEnabled(b);
+	}
+
+	public void setButtonAbortAssignmentEnabled(boolean b) {
+		buttonAbort.setEnabled(b);
+	}
+
+	public void setButtonScrapEnabled(boolean b) {
+		buttonScrap.setEnabled(b);
+	}
+
+	public void setButtonResortEnabled(boolean b) {
+		buttonResort.setEnabled(b);
+	}
+
+	private void updateBilanz(Bilanz pBilanz) {
+		labelBilanz.setText("Kontostand: " + pBilanz.getKontoStand() + " €");
+		if (listBilanz != null)
+			listBilanz.setListData(pBilanz.getString());
+	}
+
+	private void updateAssignmentList(assignmentlist pListe) {
+		assignment[] Assignments = new assignment[4];
+		for (int i = 0; i < 4; i++) {
+			panelAssignment[i].setVisible(false);
+			Assignments[i] = pListe.getAssignment(i);
+			if (Assignments[i] != null) {
+				Products p = Assignments[i].getProduct();
+				labelProductName[i].setText(p.getProductName());
+				labelProductAttr1[i].setText(p.getAttribut1());
+				labelProductAttr2[i].setText(p.getAttribut2());
+				labelReward[i].setText(Assignments[i].getReward() + "€");
+				if (Assignments[i].getAssignmenttype() == Assignmenttype.store)
+					labelAssignmentType[i].setText("+");
+				else if (Assignments[i].getAssignmenttype() == Assignmenttype.outsource)
+					labelAssignmentType[i].setText("-");
+				panelAssignment[i].setBorder(new LineBorder(new Color(0, 0, 0), 1));
+				setBackground(labelProductAttr1[i], panelAssignment[i]);
+				panelAssignment[i].setVisible(true);
+			}
+			if (pListe.getNum() >= 4)
+				buttonNewAssignment.setEnabled(false);
+			else
+				buttonNewAssignment.setEnabled(true);
+		}
+	}
+
+	private void updateShelf(compartment pRegal[]) {
+		for (int i = 0; i < 10; i++) {
+			if (pRegal[i].getProduct() != null) {
+				buttonRegalCompartment[i].setText(pRegal[i].getProduct().getProductName() + " - "
+						+ pRegal[i].getProduct().getAttribut2() + " [" + (2 - pRegal[i].getWidth()) + "/2]");
+				setButtonRegalCompartmentEnabled(true, i);
+				setBackground(buttonRegalCompartment[i], pRegal[i].getProduct().getAttribut1());
+			} else {
+				buttonRegalCompartment[i].setText("Leer");
+				buttonRegalCompartment[i].setBackground(null);
+				setButtonRegalCompartmentEnabled(false, i);
+			}
+		}
+	}
+
+	private void setBackground(JLabel lbl, JPanel pnl) {
+		switch (lbl.getText()) {
+		case "Weiß":
+			pnl.setBackground(new Color(255, 255, 255));
+			break;
+		case "Blau":
+			pnl.setBackground(new Color(94, 120, 181));
+			break;
+		case "Grün":
+			pnl.setBackground(new Color(113, 190, 152));
+			break;
+		case "Kiefer":
+			pnl.setBackground(new Color(209, 142, 52));
+			break;
+		case "Buche":
+			pnl.setBackground(new Color(180, 125, 73));
+			break;
+		case "Eiche":
+			pnl.setBackground(new Color(172, 129, 77));
+			break;
+		case "Marmor":
+			pnl.setBackground(new Color(230, 222, 200));
+			break;
+		case "Granit":
+			pnl.setBackground(new Color(55, 68, 71));
+			break;
+		case "Sandstein":
+			pnl.setBackground(new Color(210, 183, 115));
+			break;
+		default:
+			System.out.println("Fehler bei Hintergrund");
+			break;
+		}
+	}
+
+	private void setBackground(JButton buttons, String attr) {
+		switch (attr) {
+
+		case "Weiß":
+			buttons.setBackground(new Color(255, 255, 255));
+			break;
+		case "Blau":
+			buttons.setBackground(new Color(94, 120, 181));
+			break;
+		case "Grün":
+			buttons.setBackground(new Color(113, 190, 152));
+			break;
+		case "Kiefer":
+			buttons.setBackground(new Color(209, 142, 52));
+			break;
+		case "Buche":
+			buttons.setBackground(new Color(180, 125, 73));
+			break;
+		case "Eiche":
+			buttons.setBackground(new Color(172, 129, 77));
+			break;
+		case "Marmor":
+			buttons.setBackground(new Color(230, 222, 200));
+			break;
+		case "Granit":
+			buttons.setBackground(new Color(55, 68, 71));
+			break;
+		case "Sandstein":
+			buttons.setBackground(new Color(210, 183, 115));
+			break;
+		default:
+			System.out.println("Fehler beim Hintergrund");
+			break;
+
+		}
+
+	}
+
+	private void initialize() {
+		mainFrame = new JFrame();
+		mainFrame.setBounds(100, 100, 900, 900);
+		mainFrame.setResizable(true);
+		mainFrame.setTitle("Storage game //8396905");
+		mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+		ImageIcon icon = new ImageIcon("Lager.png");
+		mainFrame.setIconImage(icon.getImage());
+
+		JPanel pnlTop = new JPanel();
+		pnlTop.setBackground(new Color(123, 44, 23));
+		mainFrame.getContentPane().add(pnlTop, BorderLayout.NORTH);
+
+		JLabel lblTitle = new JLabel("Storage Game");
+		lblTitle.setFont(new Font("Times New Roman", Font.PLAIN, 50));
+		lblTitle.setForeground(Color.white);
+		pnlTop.add(lblTitle);
+
+		panelCenter = new JPanel();
+		panelCenter.setPreferredSize(new Dimension(300, 300));
+		panelCenter.setBackground(new Color(205, 179, 139));
+		mainFrame.getContentPane().add(panelCenter, BorderLayout.CENTER);
+
+		initialButtonRegalCompartment();
+		initialPanelButtons();
+		initialPanelAssignment();
+		initialPanelBilanz();
+	}
+
+	private void initialButtonRegalCompartment() {
+		UIManager.put("Button.disabledText", new ColorUIResource(Color.BLACK));
+		for (int n = 0; n < 10; n++) {
+			buttonRegalCompartment[n] = new JButton("Leer");
+			buttonRegalCompartment[n].setPreferredSize(new Dimension(80, 50));
+			buttonRegalCompartment[n].setEnabled(false);
+			buttonRegalCompartment[n].setBackground(new Color(0x68838b)); // Hintergrundfarbe des Regals
+			panelCenter.add(buttonRegalCompartment[n]);
+			panelCenter.setLayout(new GridLayout(5, 2, 80, 50));
+		}
+		buttonRegalCompartment[0].addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				theControl.fokusRegalCompartment(0);
+			}
+		});
+		buttonRegalCompartment[1].addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				theControl.fokusRegalCompartment(1);
+			}
+		});
+		buttonRegalCompartment[2].addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				theControl.fokusRegalCompartment(2);
+			}
+		});
+		buttonRegalCompartment[3].addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				theControl.fokusRegalCompartment(3);
+			}
+		});
+		buttonRegalCompartment[4].addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				theControl.fokusRegalCompartment(4);
+			}
+		});
+		buttonRegalCompartment[5].addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				theControl.fokusRegalCompartment(5);
+			}
+		});
+		buttonRegalCompartment[6].addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				theControl.fokusRegalCompartment(6);
+			}
+		});
+		buttonRegalCompartment[7].addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				theControl.fokusRegalCompartment(7);
+			}
+		});
+		buttonRegalCompartment[8].addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				theControl.fokusRegalCompartment(8);
+			}
+		});
+		buttonRegalCompartment[9].addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				theControl.fokusRegalCompartment(9);
+			}
+		});
+
+	}
+
+	private void initialPanelButtons() {
+		panelButtons = new JPanel();
+		panelButtons.setBackground(new Color(205, 179, 139));
+
+		buttonNewAssignment = new JButton("Neuer Auftrag");
+		buttonNewAssignment.setBackground(new Color(127, 255, 0));
+		buttonNewAssignment.setPreferredSize(new Dimension(140, 50));
+		buttonNewAssignment.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				try {
+					assignmentlist liste = theControl.newassignment();
+					updateAssignmentList(liste);
+				} catch (InstructionForAssignment f) {
+					System.out.println(f.getMessage());
+				}
+				theControl.resetFokusassignment();
+				theControl.resetFokusRegalFach();
+			}
+		});
+		panelButtons.add(buttonNewAssignment);
+
+		buttonAbort = new JButton("Auftrag abbrechen");
+		buttonAbort.setBackground(new Color(214, 214, 214));
+		buttonAbort.setPreferredSize(new Dimension(140, 50));
+		buttonAbort.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				theControl.abortassignment();
+			}
+		});
+		buttonAbort.setEnabled(false);
+		panelButtons.add(buttonAbort);
+
+		buttonScrap = new JButton("Verschrotten");
+		buttonScrap.setBackground(new Color(214, 214, 214));
+		buttonScrap.setPreferredSize(new Dimension(110, 50));
+		buttonScrap.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				theControl.scrap();
+			}
+		});
+		buttonScrap.setEnabled(false);
+		panelButtons.add(buttonScrap);
+
+		buttonResort = new JButton("Umlagern");
+		buttonResort.setBackground(new Color(214, 214, 214));
+		buttonResort.setPreferredSize(new Dimension(110, 50));
+		buttonResort.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				try {
+					theControl.resort(null);
+				} catch (Exception exc) {
+					System.out.println("Fehler: " + exc.getMessage());
+				}
+			}
+		});
+
+		buttonResort.setEnabled(false);
+		panelButtons.add(buttonResort);
+
+		mainFrame.getContentPane().add(panelButtons, BorderLayout.EAST);
+		panelButtons.setPreferredSize(new Dimension(200, 50));
+	}
+
+	private void initialPanelAssignment() {
+		panelAssignments = new JPanel();
+		panelAssignments.setBorder(UIManager.getBorder("DesktopIcon.border"));
+		panelAssignments.setBackground(new Color(205, 179, 139));
+		panelAssignments.setFont(new Font("Times New Roman", Font.PLAIN, 36));
+		mainFrame.getContentPane().add(panelAssignments, BorderLayout.WEST);
+
+		JPanel panelAssignmentList = new JPanel();
+		panelAssignmentList.setPreferredSize(new Dimension(250, 350));
+		panelAssignmentList.setBackground(new Color(205, 179, 139));
+		panelAssignments.add(panelAssignmentList);
+
+		for (int n = 0; n < maxNumAssignments; n++) {
+			panelAssignment[n] = new JPanel();
+			panelAssignment[n].setPreferredSize(new Dimension(400, 50));
+			panelAssignment[n].setBorder(new LineBorder(new Color(0, 0, 0), 1));
+			panelAssignment[n].setVisible(false);
+			panelAssignmentList.add(panelAssignment[n]);
+		}
+		panelAssignment[0].addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (fokusAssignment != auftrag.a0) {
+					panelAssignment[0].setBorder(new LineBorder(new Color(0, 0, 0), 4));
+					panelAssignment[1].setBorder(new LineBorder(new Color(0, 0, 0), 1));
+					panelAssignment[2].setBorder(new LineBorder(new Color(0, 0, 0), 1));
+					panelAssignment[3].setBorder(new LineBorder(new Color(0, 0, 0), 1));
+					fokusAssignment = auftrag.a0;
+					theControl.fokusassignment(0);
+				} else {
+					theControl.resetFokusassignment();
+					fokusAssignment = null;
+					panelAssignment[0].setBorder(new LineBorder(new Color(0, 0, 0), 1));
+				}
+			}
+		});
+		panelAssignment[1].addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (fokusAssignment != auftrag.a1) {
+					panelAssignment[0].setBorder(new LineBorder(new Color(0, 0, 0), 1));
+					panelAssignment[1].setBorder(new LineBorder(new Color(0, 0, 0), 4));
+					panelAssignment[2].setBorder(new LineBorder(new Color(0, 0, 0), 1));
+					panelAssignment[3].setBorder(new LineBorder(new Color(0, 0, 0), 1));
+					fokusAssignment = auftrag.a1;
+					theControl.fokusassignment(1);
+				} else {
+					theControl.resetFokusassignment();
+					fokusAssignment = null;
+					panelAssignment[1].setBorder(new LineBorder(new Color(0, 0, 0), 1));
+				}
+			}
+		});
+		panelAssignment[2].addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (fokusAssignment != auftrag.a2) {
+					panelAssignment[0].setBorder(new LineBorder(new Color(0, 0, 0), 1));
+					panelAssignment[1].setBorder(new LineBorder(new Color(0, 0, 0), 1));
+					panelAssignment[2].setBorder(new LineBorder(new Color(0, 0, 0), 4));
+					panelAssignment[3].setBorder(new LineBorder(new Color(0, 0, 0), 1));
+					fokusAssignment = auftrag.a2;
+					theControl.fokusassignment(2);
+				} else {
+					theControl.resetFokusassignment();
+					fokusAssignment = null;
+					panelAssignment[2].setBorder(new LineBorder(new Color(0, 0, 0), 1));
+				}
+			}
+		});
+		panelAssignment[3].addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (fokusAssignment != auftrag.a3) {
+					panelAssignment[0].setBorder(new LineBorder(new Color(0, 0, 0), 1));
+					panelAssignment[1].setBorder(new LineBorder(new Color(0, 0, 0), 1));
+					panelAssignment[2].setBorder(new LineBorder(new Color(0, 0, 0), 1));
+					panelAssignment[3].setBorder(new LineBorder(new Color(0, 0, 0), 4));
+					fokusAssignment = auftrag.a3;
+					theControl.fokusassignment(3);
+				} else {
+					theControl.resetFokusassignment();
+					fokusAssignment = null;
+					panelAssignment[3].setBorder(new LineBorder(new Color(0, 0, 0), 1));
+				}
+			}
+		});
+
+		for (int n = 0; n < 4; n++) {
+			Font f = new Font("Dialog", Font.PLAIN, 24);
+			labelProductName[n] = new JLabel("Produktname");
+			labelProductName[n].setFont(f);
+			labelProductName[n].setBorder(null);
+			panelAssignment[n].add(labelProductName[n]);
+
+			labelProductAttr1[n] = new JLabel("Attr1");
+			labelProductAttr1[n].setFont(f);
+			panelAssignment[n].add(labelProductAttr1[n]);
+
+			labelProductAttr2[n] = new JLabel("Attr2");
+			labelProductAttr2[n].setFont(f);
+			panelAssignment[n].add(labelProductAttr2[n]);
+
+			labelReward[n] = new JLabel("Belohnung");
+			labelReward[n].setFont(f);
+			panelAssignment[n].add(labelReward[n]);
+
+			labelAssignmentType[n] = new JLabel("Art");
+			labelAssignmentType[n].setFont(f);
+			panelAssignment[n].add(labelAssignmentType[n]);
+		}
+	}
+
+	private void initialPanelBilanz() {
+		panelBilanz = new JPanel();
+		panelBilanz.setBounds(400, 400, 30, 100);
+		panelBilanz.setBackground(new Color(205, 179, 139)); // Hintergrundfarbe hinter Button Bilanz
+		panelBilanz.setBounds(0, 0, 250, 250);
+
+		labelBilanz = new JLabel("Kontostand: 0 €");
+		labelBilanz.setFont(new Font("Dialog", Font.PLAIN, 20));
+		labelBilanz.setForeground(new Color(123, 44, 23));
+		labelBilanz.setPreferredSize(new Dimension(370, 50));
+		panelBilanz.add(labelBilanz);
+
+		buttonBilanz = new JButton("Bilanzen");
+		buttonBilanz.setForeground(Color.white);
+		buttonBilanz.setBackground(new Color(123, 44, 23));
+		buttonBilanz.setPreferredSize(new Dimension(140, 50));
+		buttonBilanz.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				initialBilanzList();
+			}
+		});
+		panelBilanz.add(buttonBilanz);
+
+		mainFrame.getContentPane().add(panelBilanz, BorderLayout.SOUTH);
+
+	}
+
+	private void initialBilanzList() {
+		JPanel panelBilanzList = new JPanel();
+		String[] temp;
+		buttonBilanz.setEnabled(false);
+		buttonBilanz.setBackground(new Color(205, 179, 139));
+		listBilanz = new JList<String>();
+		bilanzFrame = new JFrame();
+		bilanzFrame.setBounds(100, 100, 350, 550);
+		bilanzFrame.setResizable(false);
+		bilanzFrame.setVisible(true);
+		bilanzFrame.setTitle("Bilanzen");
+
+		bilanzFrame.addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent we) {
+				buttonBilanz.setBackground(new Color(123, 44, 23));
+				buttonBilanz.setEnabled(true);
+
+				ImageIcon money = new ImageIcon("money.png");
+				bilanzFrame.setIconImage(money.getImage());
+			}
+		});
+
+		Bilanz pBilanz = theControl.getBilanz();
+		if (pBilanz == null) {
+			temp = new String[1];
+			temp[0] = "Bilanz: 0 €";
+		} else
+			temp = pBilanz.getString();
+		listBilanz.setListData(temp);
+		listBilanz.setFont(new Font("Dialog", Font.PLAIN, 24));
+		JScrollPane scrollBilanz = new JScrollPane(listBilanz);
+		scrollBilanz.setPreferredSize(new Dimension(280, 455));
+		;
+		panelBilanzList.add(scrollBilanz);
+		bilanzFrame.add(panelBilanzList);
+	}
+
+	public enum btnMode {
+		fokusAssignment, fokusShelf, resort, neutral
+	}
+
+	private enum auftrag {
+		a0, a1, a2, a3, a4
+
+	}
+}

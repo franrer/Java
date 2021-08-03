@@ -1,0 +1,74 @@
+package Shelf;
+
+import Products.*;
+import Enums.*;
+
+import Ausnahmefaelle.*;
+import Assignment.assignment;
+
+public class compartment {
+	int aPosX, aPosY;
+	private Regalcontent top;
+	int num = 0;
+
+	public compartment(int aPosX, int aPosY) {
+		this.aPosX = aPosX;
+		this.aPosY = aPosY;
+	}
+
+	public int getPosX() {
+		return aPosX;
+	}
+
+	public int getPosY() {
+		return aPosY;
+	}
+
+	public int getWidth() {
+		return 2 - num;
+	}
+
+	public void pushProduct(Products aProduct) throws InstructionForRegal {
+		if (num < 2) {
+			Regalcontent temp = new Regalcontent();
+			temp.aProduct = aProduct;
+			temp.next = top;
+			top = temp;
+			if (aProduct.getAttribut2().equals("Balken"))
+				num = 2;
+			else
+				num++;
+		} else
+			throw new InstructionForRegal(Conditions.BarNeedsTwoPalletts);
+	}
+
+	public Products getProduct() {
+		if (top != null)
+			return top.aProduct;
+		else
+			return null;
+	}
+
+	public void popProduct() throws InstructionForRegal {
+		if (top != null) {
+			if (top.aProduct.getAttribut2().equals("Balken"))
+				num = 0;
+			else
+				num--;
+			top = top.next;
+		} else
+			throw new InstructionForRegal(Conditions.full);
+	}
+
+	public void checkAssignment(assignment pAssignment) throws InstructionForAssignment {
+		if (top != null) {
+			String tName = top.aProduct.getProductName(), pName = pAssignment.getProduct().getProductName(),
+					tAttr1 = top.aProduct.getAttribut1(), pAttr1 = pAssignment.getProduct().getAttribut1(),
+					tAttr2 = top.aProduct.getAttribut2(), pAttr2 = pAssignment.getProduct().getAttribut2();
+			if (!tName.equals(pName) || !tAttr1.equals(pAttr1) || !tAttr2.equals(pAttr2))
+				throw new InstructionForAssignment(Conditions.notMatchingAssignment);
+		} else
+			throw new InstructionForAssignment(Conditions.empty);
+	}
+
+}

@@ -1,0 +1,55 @@
+package Control;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+
+public class CSVListe {
+	String csvFile = "Auftragsliste.csv";
+	FileReader fr;
+	BufferedReader br;
+	int anzSpalten = 1;
+
+	public CSVListe() {
+		try {
+			fr = new FileReader(csvFile);
+			br = new BufferedReader(fr);
+			String row = br.readLine();
+			for (int n = 0; n < row.length(); n++)
+				if (row.charAt(n) == ';')
+					anzSpalten++;
+		} catch (IOException e) {
+			System.out.println(e.getMessage());
+		}
+	}
+
+	public String[] getNextRow() {
+		String[] temp = new String[anzSpalten];
+		for (int i = 0; i < temp.length; i++) {
+			temp[i] = "";
+		}
+		try {
+			String row = br.readLine();
+			if (row == null) {
+				br.close();
+				fr = new FileReader(csvFile);
+				br = new BufferedReader(fr);
+				br.readLine();
+				row = br.readLine();
+			}
+			int i = 0;
+			for (int n = 0; n < row.length(); n++)
+				if (row.charAt(n) != ';')
+					temp[i] += row.charAt(n);
+				else
+					i++;
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+		}
+		return temp;
+	}
+
+	protected void finalize() throws IOException {
+		br.close();
+	}
+}

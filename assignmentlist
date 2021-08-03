@@ -1,0 +1,63 @@
+package Assignment;
+
+import Ausnahmefaelle.*;
+import Enums.*;
+
+public class assignmentlist {
+
+	private assignment[] eAssignment = new assignment[4];
+	int num = 0;
+
+	public assignmentlist(assignment peAssignment) {
+		eAssignment[0] = peAssignment;
+		num++;
+	}
+
+	public assignment getAssignmentById(int pId) throws InstructionForAssignment {
+		for (int i = 0; i < 5; i++)
+			if (eAssignment[i] != null && eAssignment[i].getId() == pId)
+				return eAssignment[i];
+		throw new InstructionForAssignment(Conditions.idNotFound);
+	}
+
+	public assignment getAssignment(int pIndex) {
+		return eAssignment[pIndex];
+	}
+
+	public int getNum() {
+		return num;
+	}
+
+	public void newAssignment(assignment peAssignment) throws InstructionForAssignment {
+		if (num >= 4)
+			throw new InstructionForAssignment(Conditions.maximalFourAssignment);
+		for (int i = 0; i < 5; i++) {
+			if (eAssignment[i] == null) {
+				eAssignment[i] = peAssignment;
+				break;
+			}
+		}
+		num++;
+	}
+
+	public void deleteAssignment(int pIndex) {
+		if (eAssignment[pIndex] != null) {
+			eAssignment[pIndex] = null;
+			num--;
+		}
+	}
+
+	public void deleteAssignmentById(int pId) throws InstructionForAssignment {
+		boolean gefunden = false;
+		for (int i = 0; i < 5; i++) {
+			if (eAssignment[i] != null && eAssignment[i].getId() == pId) {
+				gefunden = true;
+				eAssignment[i] = null;
+				num--;
+				break;
+			}
+		}
+		if (!gefunden)
+			throw new InstructionForAssignment(Conditions.idNotFound);
+	}
+}

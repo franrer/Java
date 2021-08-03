@@ -1,0 +1,20 @@
+package Products;
+
+import Enums.Conditions;
+import Ausnahmefaelle.*;
+
+public class Stone extends Products {
+	public Stone(String aAttribut1, String aAttribut2) {
+		super(aAttribut1, aAttribut2);
+		String aProductName = "Stein";
+
+	}
+
+	public void checkStore(int posX, int posY, int regalWidth) throws InstructionForRegal {
+		if (regalWidth <= 0)
+			throw new InstructionForRegal(Conditions.full);
+		if (getAttribut2().equals("Schwer") && posY != 4)
+			throw new InstructionForRegal(Conditions.heavyStoneUnderneath);
+	}
+
+}

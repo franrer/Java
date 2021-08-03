@@ -1,0 +1,27 @@
+package Products;
+
+import Ausnahmefaelle.*;
+
+public abstract class Products {
+	private String aAttribut1, aAttribut2;
+	protected String aProductName;
+
+	public Products(String aAttribut1, String aAttribut2) {
+		this.aAttribut1 = aAttribut1;
+		this.aAttribut2 = aAttribut2;
+	}
+
+	public String getAttribut1() {
+		return aAttribut1;
+	}
+
+	public String getAttribut2() {
+		return aAttribut2;
+	}
+
+	public String getProductName() {
+		return aProductName;
+	}
+
+	public abstract void checkStore(int posX, int posY, int regalWidth) throws InstructionForRegal;
+}

@@ -61,3 +61,8 @@ Es können maximal vier Aufträge gleichzeitig bearbeitet werden (weitere Klicks
     Die Bilanz:
 
 Natürlich muss immer der Kontostand sichtbar sein. Zusätzlich gibt es einen Button "Bilanz". Die Bilanz öffnet sich in separatem Fenster und zeigt folgende Informationen: Umsätze (Summe), Kosten (Summe) und Einzelbuchungen, also eine Tabelle mit jeder Veränderung des Kontostands. Jede Buchung ist mit einem Text (Einlagerungsauftrag, Auslagerungsauftrag, Umlagerung usw.) und einem Betrag versehen.
+
+
+Note:
+
+

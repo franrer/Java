@@ -1,0 +1,42 @@
+package Ausnahmefaelle;
+
+import Enums.Conditions;
+
+public class InstructionForAssignment extends Exception {
+
+	private static final long serialVersionUID = 1L;
+	String errMessage = "Auftragsfehler: ";
+
+	public InstructionForAssignment(Conditions u) {
+		super();
+		switch (u) {
+		case idNotFound:
+			errMessage += "Auftrags-ID wurde nicht gefunden!";
+			break;
+		case maximalFourAssignment:
+			errMessage += "Es können nur vier Aufträge gleichzeitig laufen!";
+			break;
+		case notMatchingAssignment:
+			errMessage += "Auftrag passt nicht zum Produkt!";
+			break;
+		case productName:
+			errMessage += "Fehler beim Parsen des Produktnamens!";
+			break;
+		case productAttr1:
+			errMessage += "Fehler beim Parsen von Attribut1!";
+			break;
+		case productAttr2:
+			errMessage += "Fehler beim Parsen von Attribut2!";
+			break;
+		case assignmentType:
+			errMessage += "Fehler beim Parsen der Auftragsart!";
+			break;
+		default:
+			break;
+		}
+	}
+
+	public String getMessage() {
+		return errMessage;
+	}
+}

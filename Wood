@@ -1,0 +1,21 @@
+package Products;
+
+import Ausnahmefaelle.InstructionForRegal;
+import Enums.Conditions;
+
+public class Wood extends Products {
+	public Wood(String aAttribut1, String aAttribut2) {
+
+		super(aAttribut1, aAttribut2);
+		String aProductName = "Holz";
+
+	}
+
+	public void checkStore(int posX, int posY, int regalWidth) throws InstructionForRegal {
+		if (regalWidth <= 0)
+			throw new InstructionForRegal(Conditions.full);
+		if (getAttribut2().equals("Balken") && regalWidth != 2)
+			throw new InstructionForRegal(Conditions.BarNeedsTwoPalletts);
+	}
+
+}

@@ -1,0 +1,5 @@
+package Enums;
+
+public enum Assignmenttype {
+	store, outsource, scrap, resort, abort
+}

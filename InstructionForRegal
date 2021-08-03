@@ -1,0 +1,33 @@
+package Ausnahmefaelle;
+
+import Enums.*;
+
+public class InstructionForRegal extends Exception {
+
+	private static final long serialVersionUID = 3743653734833711870L;
+	String errMessage = "Fehler im Regal: ";
+
+	public InstructionForRegal(Conditions u) {
+		super();
+		switch (u) {
+		case full:
+			errMessage += "Regalfach ist bereits voll!";
+			break;
+		case empty:
+			errMessage += "Regalfach ist leer!";
+			break;
+		case heavyStoneUnderneath:
+			errMessage += "Aufgrund der Schwere der Steine, muss ein Stein unten gelagert werden!";
+			break;
+		case BarNeedsTwoPalletts:
+			errMessage += "Ein Holzbalken braucht ein ganz leeres Regalfach mit zwei freien Plätzen hintereinander!";
+			break;
+		default:
+			break;
+		}
+	}
+
+	public String getMessage() {
+		return errMessage;
+	}
+}

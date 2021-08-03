@@ -1,0 +1,40 @@
+package Bilanz;
+
+import Assignment.assignment;
+import Enums.Assignmenttype;
+
+public class Entry {
+	private assignment aAssignment;
+	private boolean aExecuted;
+	public Entry next;
+
+	public Entry(assignment aAssignment, boolean aExecuted) {
+		this.aAssignment = aAssignment;
+		this.aExecuted = aExecuted;
+	}
+
+	public assignment getAssignment() {
+		return aAssignment;
+	}
+
+	public boolean getExecuted() {
+		return aExecuted;
+	}
+
+	public String getString() {
+		String r = "";
+		if (aAssignment.getProduct() != null) {
+			String name = aAssignment.getProduct().getProductName(), reward = Integer.toString(aAssignment.getReward()),
+					Type = aAssignment.getAssignmenttype() == Assignmenttype.store ? "+" : "-",
+					sign = aExecuted ? "+" : "-";
+			r = Type + "   " + name + "  " + sign + reward + " €";
+		} else {
+			Assignmenttype Type = aAssignment.getAssignmenttype();
+			String name = Type == Assignmenttype.resort ? "Umlagern"
+					: Type == Assignmenttype.scrap ? "Verschrotten" : Type == Assignmenttype.abort ? "Strafe" : "",
+					reward = Integer.toString(aAssignment.getReward()), sign = aExecuted ? "+" : "-";
+			r = name + "  " + sign + reward + " €";
+		}
+		return r;
+	}
+}

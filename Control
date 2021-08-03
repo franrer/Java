@@ -1,0 +1,278 @@
+package Control;
+
+import javax.swing.JOptionPane;
+
+import Assignment.*;
+import Bilanz.Bilanz;
+import Bilanz.Entry;
+import Enums.Assignmenttype;
+import Ausnahmefaelle.InstructionForAssignment;
+import Ausnahmefaelle.InstructionForRegal;
+import GUI.Start;
+import GUI.Start.btnMode;
+import Products.Products;
+import Shelf.compartment;
+
+public class Control {
+	compartment theShelf[] = new compartment[10];
+	Start Gui;
+	CSVListe derScanner;
+	assignmentlist dieassignmentsListe;
+	Bilanz dieBilanz;
+	assignment aFokusassignment;
+	compartment aFokusRegalFach;
+	mode modus;
+
+	public Control(Start Gui) {
+		this.Gui = Gui;
+		derScanner = new CSVListe();
+		for (int n = 0; n < 10; n++)
+			theShelf[n] = new compartment(n % 2, n / 2);
+	}
+
+	public assignmentlist newassignment() throws InstructionForAssignment {// muss wahrscheinlich iwie mit exceptions
+																			// machen
+		String[] Zassignment = derScanner.getNextRow();
+		if (dieassignmentsListe == null)
+			dieassignmentsListe = new assignmentlist(new assignment(Zassignment));
+		else
+			dieassignmentsListe.newAssignment(new assignment(Zassignment));
+		return dieassignmentsListe;
+	}
+
+	public mode getModus() {
+		return modus;
+	}
+
+	public Bilanz getBilanz() {
+		return dieBilanz;
+	}
+
+	public assignmentlist getassignmentsListe() {
+		return dieassignmentsListe;
+	}
+
+	public compartment[] getShelf() {
+		return theShelf;
+	}
+
+	public void fokusassignment(int pIndex) {
+		aFokusassignment = dieassignmentsListe.getAssignment(pIndex);
+		if (aFokusassignment.getAssignmenttype() == Assignmenttype.store)
+			modus = mode.store;
+		else if (aFokusassignment.getAssignmenttype() == Assignmenttype.outsource)
+			modus = mode.outsource;
+		Gui.updateButtons(btnMode.fokusAssignment);
+		for (int i = 0; i < 10; i++) {
+			Gui.setButtonRegalCompartmentEnabled(false, i);
+			if (modus == mode.store) {
+				try {
+					aFokusassignment.getProduct().checkStore(theShelf[i].getPosX(), theShelf[i].getPosY(),
+							theShelf[i].getWidth());
+					Gui.setButtonRegalCompartmentEnabled(true, i);
+				} catch (InstructionForRegal e) {
+				}
+			} else if (modus == mode.outsource) {
+				try {
+					theShelf[i].checkAssignment(aFokusassignment);
+					Gui.setButtonRegalCompartmentEnabled(true, i);
+				} catch (InstructionForAssignment e) {
+				}
+			}
+		}
+	}
+
+	public void fokusRegalCompartment(int pRegalFach) {
+		switch (modus) {
+		case store:
+			store(aFokusassignment, theShelf[pRegalFach]);
+			Gui.updateButtons(btnMode.neutral);
+			for (int i = 0; i < 10; i++)
+				if (theShelf[i].getProduct() == null)
+					Gui.setButtonRegalCompartmentEnabled(false, i);
+				else
+					Gui.setButtonRegalCompartmentEnabled(true, i);
+			break;
+		case outsource:
+			outsource(aFokusassignment, theShelf[pRegalFach]);
+			Gui.updateButtons(btnMode.neutral);
+			break;
+		case neutral:
+			if (aFokusRegalFach == null) {
+				aFokusRegalFach = theShelf[pRegalFach];
+				Gui.setButtonRegalCompartmentEnabled(false);
+				Gui.setButtonRegalCompartmentEnabled(true, pRegalFach);
+				Gui.updateButtons(btnMode.fokusShelf);
+			} else {
+				resetFokusRegalFach();
+				for (int i = 0; i < 10; i++)
+					if (theShelf[i].getProduct() == null)
+						Gui.setButtonRegalCompartmentEnabled(false, i);
+					else
+						Gui.setButtonRegalCompartmentEnabled(true, i);
+				Gui.updateButtons(btnMode.neutral);
+			}
+			break;
+		case resort:
+			try {
+				resort(theShelf[pRegalFach]);
+				resetFokusRegalFach();
+				Gui.updateGui();
+				Gui.updateButtons(btnMode.neutral);
+			} catch (Exception e) {
+				System.out.println("Fehler: " + e.getMessage());
+			}
+			break;
+		}
+	}
+
+	public void resetFokusassignment() {
+		aFokusassignment = null;
+		modus = mode.neutral;
+		for (int i = 0; i < 10; i++)
+			if (theShelf[i].getProduct() == null)
+				Gui.setButtonRegalCompartmentEnabled(false, i);
+			else
+				Gui.setButtonRegalCompartmentEnabled(true, i);
+		Gui.updateButtons(btnMode.neutral);
+	}
+
+	public void resetFokusRegalFach() {
+		aFokusRegalFach = null;
+		modus = mode.neutral;
+	}
+
+	public void resetassignmentsListe() {
+		dieassignmentsListe = null;
+	}
+
+	private void store(assignment passignment, compartment pRegalFach) {
+		try {
+			passignment.getProduct().checkStore(pRegalFach.getPosX(), pRegalFach.getPosY(), pRegalFach.getWidth());
+			dieassignmentsListe.getAssignmentById(passignment.getId()); // Test ob assignment vorhanden
+			pRegalFach.pushProduct(passignment.getProduct());
+			Entry tempEntry = new Entry(passignment, true);
+			if (dieBilanz == null)
+				dieBilanz = new Bilanz(tempEntry);
+			else
+				dieBilanz.newEntry(tempEntry);
+			dieassignmentsListe.deleteAssignmentById(passignment.getId());
+
+			resetFokusassignment();
+			resetFokusRegalFach();
+			modus = mode.neutral;
+			Gui.updateGui();
+			Gui.updateButtons(btnMode.neutral);
+		} catch (InstructionForAssignment e) {
+			JOptionPane.showMessageDialog(null, e.getMessage(), "Auftragsfehler", JOptionPane.ERROR_MESSAGE);
+		} catch (InstructionForRegal e) {
+			JOptionPane.showMessageDialog(null, e.getMessage(), "Regalfehler", JOptionPane.CANCEL_OPTION);
+		}
+	}
+
+	private void outsource(assignment passignment, compartment pRegalFach) {
+		Products ap = passignment.getProduct(), // ap = assignmentsProdukt
+				rp = pRegalFach.getProduct(); // rp = RegalProdukt
+		boolean name = ap.getProductName() == rp.getProductName(), attr1 = ap.getAttribut1().equals(rp.getAttribut1()),
+				attr2 = ap.getAttribut2().equals(rp.getAttribut2());
+		if (name && attr1 && attr2) {
+			try {
+				dieassignmentsListe.getAssignmentById(passignment.getId());
+				pRegalFach.popProduct();
+				dieBilanz.newEntry(new Entry(passignment, true));
+				dieassignmentsListe.deleteAssignmentById(passignment.getId());
+				resetFokusRegalFach();
+				resetFokusassignment();
+
+				Gui.updateGui();
+				Gui.updateButtons(btnMode.neutral);
+				modus = mode.neutral;
+			} catch (InstructionForAssignment e) {
+				JOptionPane.showMessageDialog(null, e.getMessage(), "assignmentsfehler", JOptionPane.ERROR_MESSAGE);
+			} catch (InstructionForRegal e) {
+				JOptionPane.showMessageDialog(null, e.getMessage(), "Regalfehler", JOptionPane.CANCEL_OPTION);
+			}
+		}
+	}
+
+	public void abortassignment() {
+		if (aFokusassignment != null) {
+			try {
+				dieassignmentsListe.deleteAssignmentById(aFokusassignment.getId());
+				assignment tempassignment = new assignment(Assignmenttype.abort, aFokusassignment.getReward());
+				Entry tempEintraege = new Entry(tempassignment, false);
+				if (dieBilanz == null)
+					dieBilanz = new Bilanz(tempEintraege);
+				else
+					dieBilanz.newEntry(tempEintraege);
+				Gui.updateGui();
+				Gui.updateButtons(btnMode.neutral);
+			} catch (InstructionForAssignment e) {
+				JOptionPane.showMessageDialog(null, e.getMessage(), "Auftragfehler", JOptionPane.ERROR_MESSAGE);
+			}
+		}
+	}
+
+	public void scrap() {
+		try {
+			if (aFokusRegalFach != null) {
+				aFokusRegalFach.popProduct();
+				dieBilanz.newEntry(new Entry(new assignment(Assignmenttype.scrap, 300), false));
+				Gui.updateGui();
+				Gui.updateButtons(btnMode.neutral);
+				resetFokusRegalFach();
+				modus = mode.neutral;
+			}
+		} catch (InstructionForRegal e) {
+			JOptionPane.showMessageDialog(null, e.getMessage(), "Regalfehler", JOptionPane.CANCEL_OPTION);
+		}
+	}
+
+	public void resort(compartment ziel) throws Exception {
+		if (modus == mode.neutral && aFokusRegalFach != null) {
+			modus = mode.resort;
+			Gui.setButtonScrapEnabled(false);
+			Gui.setButtonRegalCompartmentEnabled(false);
+			for (int i = 0; i < 11; i++) {
+				if (aFokusRegalFach != theShelf[i]) { // damit man ein produkt nicht in das gleiche RegalFach zurück
+														// lagern kann
+					try {
+						// probiert alle Regale durch, nur die, die möglich sind, werden auf eneabled
+						// geschaltet
+						aFokusRegalFach.getProduct().checkStore(theShelf[i].getPosX(), theShelf[i].getPosY(),
+								theShelf[i].getWidth());
+						Gui.setButtonRegalCompartmentEnabled(true, i);
+					} catch (Exception e) {
+					}
+				}
+			}
+		} else if (modus == mode.resort) {
+			if (ziel != null) {
+				try {
+					aFokusRegalFach.getProduct().checkStore(ziel.getPosX(), ziel.getPosY(), ziel.getWidth());
+					ziel.pushProduct(aFokusRegalFach.getProduct());
+					aFokusRegalFach.popProduct();
+					dieBilanz.newEntry(new Entry(new assignment(Assignmenttype.resort, 50), false));
+					Gui.updateGui();
+					modus = mode.neutral;
+				} catch (InstructionForRegal e) {
+					JOptionPane.showMessageDialog(null, e.getMessage(), "Regalfehler", JOptionPane.CANCEL_OPTION);
+				}
+			} else {
+				Gui.updateButtons(btnMode.neutral);
+				for (int i = 0; i < 10; i++)
+					if (theShelf[i].getProduct() == null)
+						Gui.setButtonRegalCompartmentEnabled(false, i);
+					else
+						Gui.setButtonRegalCompartmentEnabled(true, i);
+				resetFokusRegalFach();
+				modus = mode.neutral;
+			}
+		} else
+			throw new Exception("Fehler beim modus umlagern in Steuerung!");
+	}
+
+	public enum mode {
+		neutral, store, outsource, resort
+	}
+}

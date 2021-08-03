@@ -1,0 +1,9 @@
+package Shelf;
+
+import Products.*;
+
+public class Regalcontent {
+	Products aProduct;
+	Regalcontent next;
+
+}
